@@ -41,6 +41,7 @@ class TransformerConfig(config.Config):
     use_lhuc: bool = False
     depth_key_value: int = 0
     use_glu: bool = False
+    repeat_layers: int = 1
 
 
 class TransformerEncoderBlock(mx.gluon.HybridBlock):

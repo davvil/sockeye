@@ -11,6 +11,10 @@ Note that Sockeye has checks in place to not translate with an old model that wa
 
 Each version section may have have subsections for: _Added_, _Changed_, _Removed_, _Deprecated_, and _Fixed_.
 
+## [2.3.18]
+### Added
+- Added option `--repeat-layers` to add N consecutive copies of each encoder and/or decoder layer. This is equivalent to sharing weights between different layers. For example, a model with `--num-layers 1` and `--repeat-layers 6` will have 6 layers that share the same weights (6 copies of a single layer). A model with `--num-layers 3` and `--repeat-layers 2` will have the layer sequence (1, 1, 2, 2, 3, 3).
+
 ## [2.3.17]
 ### Added
 - Added an alternative, faster implementation of greedy search. The '--greedy' flag to `sockeye.translate` will enable it. This implementation does not support hypothesis scores, batch decoding, or lexical constraints."

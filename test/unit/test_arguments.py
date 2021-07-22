@@ -111,6 +111,7 @@ def test_device_args(test_params, expected_params):
               allow_missing_params=False,
               ignore_extra_params=False,
               num_layers=(6, 6),
+              repeat_layers=(1, 1),
               num_embed=(None, None),
               source_factors_num_embed=[],
               source_factors_combine=[C.FACTORS_COMBINE_SUM],

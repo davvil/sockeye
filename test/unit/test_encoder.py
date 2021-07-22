@@ -41,7 +41,7 @@ def test_get_transformer_encoder(lhuc):
                                                    attention_heads=10,
                                                    feed_forward_num_hidden=30,
                                                    act_type='test_act',
-                                                   num_layers=40,
+                                                   num_layers=10,
                                                    dropout_attention=1.0,
                                                    dropout_act=2.0,
                                                    dropout_prepost=3.0,
@@ -50,10 +50,15 @@ def test_get_transformer_encoder(lhuc):
                                                    postprocess_sequence='test_post',
                                                    max_seq_len_source=50,
                                                    max_seq_len_target=60,
-                                                   use_lhuc=lhuc)
+                                                   use_lhuc=lhuc,
+                                                   repeat_layers=2)
     encoder = sockeye.encoder.get_transformer_encoder(config, prefix=prefix, dtype = C.DTYPE_FP32)
     encoder.initialize()
     encoder.hybridize(static_alloc=True)
 
     assert type(encoder) == sockeye.encoder.TransformerEncoder
     assert encoder.prefix == prefix + C.TRANSFORMER_ENCODER_PREFIX
+
+    # When repeat_layers=2, each layer is added twice.
+    assert encoder.layers[0] is encoder.layers[1]
+    assert encoder.layers[1] is not encoder.layers[2]

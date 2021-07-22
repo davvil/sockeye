@@ -28,7 +28,7 @@ def test_get_decoder(lhuc):
         attention_heads=10,
         feed_forward_num_hidden=30,
         act_type='test_act',
-        num_layers=50,
+        num_layers=10,
         dropout_attention=0.5,
         dropout_act=0.6,
         dropout_prepost=0.1,
@@ -37,8 +37,13 @@ def test_get_decoder(lhuc):
         postprocess_sequence='test_post_seq',
         max_seq_len_source=60,
         max_seq_len_target=70,
-        use_lhuc=lhuc)
+        use_lhuc=lhuc,
+        repeat_layers=2)
     decoder = sockeye.decoder.get_decoder(config, inference_only=False, prefix='test_')
 
     assert type(decoder) == sockeye.decoder.TransformerDecoder
     assert decoder.prefix == 'test_' + C.TRANSFORMER_DECODER_PREFIX
+
+    # When repeat_layers=2, each layer is added twice.
+    assert decoder.layers[0] is decoder.layers[1]
+    assert decoder.layers[1] is not decoder.layers[2]

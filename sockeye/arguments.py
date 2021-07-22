@@ -673,6 +673,13 @@ def add_model_parameters(params):
                               default=(6, 6),
                               help='Number of layers for encoder & decoder. '
                                    'Use "x:x" to specify separate values for encoder & decoder. Default: %(default)s.')
+    model_params.add_argument('--repeat-layers',
+                              type=multiple_values(num_values=2, greater_or_equal=1),
+                              default=(1, 1),
+                              help='Number of times to repeat each encoder & decoder layer before advancing to the next '
+                                   'layer. A layer repeated N times is equivalent to N layers of the same type that '
+                                   'share weights. Use "x:x" to specify separate values for encoder & decoder. '
+                                   'Default: %(default)s.')
 
     # transformer arguments
     model_params.add_argument('--transformer-model-size',

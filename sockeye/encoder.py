@@ -298,7 +298,9 @@ class TransformerEncoder(Encoder, mx.gluon.HybridBlock):
 
             self.layers = mx.gluon.nn.HybridSequential()
             for i in range(config.num_layers):
-                self.layers.add(transformer.TransformerEncoderBlock(config, prefix="%d_" % i, dtype=dtype))
+                block = transformer.TransformerEncoderBlock(config, prefix="%d_" % i, dtype=dtype)
+                for _ in range(config.repeat_layers):
+                    self.layers.add(block)
 
             self.final_process = transformer.TransformerProcessBlock(sequence=config.preprocess_sequence,
                                                                      dropout=config.dropout_prepost,

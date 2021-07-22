@@ -112,6 +112,10 @@ class Decoder(mx.gluon.Block):
     def get_num_hidden(self):
         raise NotImplementedError()
 
+    @abstractmethod
+    def get_num_layers(self):
+        raise NotImplementedError()
+
 
 @Decoder.register(transformer.TransformerConfig, C.TRANSFORMER_DECODER_PREFIX)
 class TransformerDecoder(Decoder, mx.gluon.HybridBlock):
@@ -149,8 +153,10 @@ class TransformerDecoder(Decoder, mx.gluon.HybridBlock):
 
             self.layers = mx.gluon.nn.HybridSequential()
             for i in range(config.num_layers):
-                self.layers.add(transformer.TransformerDecoderBlock(config, prefix="%d_" % i, dtype=dtype,
-                                                                    inference_only=self.inference_only))
+                block = transformer.TransformerDecoderBlock(config, prefix="%d_" % i, dtype=dtype,
+                                                            inference_only=self.inference_only)
+                for _ in range(config.repeat_layers):
+                    self.layers.add(block)
 
             self.final_process = transformer.TransformerProcessBlock(sequence=config.preprocess_sequence,
                                                                      dropout=config.dropout_prepost,
@@ -164,7 +170,7 @@ class TransformerDecoder(Decoder, mx.gluon.HybridBlock):
         """
         structure = ''
         if self.inference_only:
-            structure += C.STEP_STATE + C.BIAS_STATE + C.ENCODER_STATE * self.config.num_layers
+            structure += C.STEP_STATE + C.BIAS_STATE + C.ENCODER_STATE * self.get_num_layers()
         else:
             structure += C.STEP_STATE + C.ENCODER_STATE + C.BIAS_STATE
 
@@ -233,13 +239,13 @@ class TransformerDecoder(Decoder, mx.gluon.HybridBlock):
         if self.inference_only:
             steps, source_valid_length, *other = states
             source_encoded = None  # use constant pre-computed key value projections from the states
-            enc_att_kv = other[:self.config.num_layers]
-            autoregr_states = other[self.config.num_layers:]
+            enc_att_kv = other[:self.get_num_layers()]
+            autoregr_states = other[self.get_num_layers():]
         else:
             if any(layer.needs_mask for layer in self.layers):
                 mask = self.autoregressive_bias(step_input)  # mask: (1, length, length)
             steps, source_encoded, source_valid_length, *autoregr_states = states
-            enc_att_kv = [None for _ in range(self.config.num_layers)]
+            enc_att_kv = [None for _ in range(self.get_num_layers())]
 
         if any(layer.num_state_tensors > 1 for layer in self.layers):
             # separates autoregressive states by layer
@@ -277,7 +283,7 @@ class TransformerDecoder(Decoder, mx.gluon.HybridBlock):
 
         if self.inference_only:
             # pass in cached encoder states
-            encoder_attention_keys_values = states[2:2 + self.config.num_layers]
+            encoder_attention_keys_values = states[2:2 + self.get_num_layers()]
             new_states = [steps, states[1]] + encoder_attention_keys_values + new_autoregr_states
         else:
             encoder_outputs = states[1]
@@ -288,3 +294,6 @@ class TransformerDecoder(Decoder, mx.gluon.HybridBlock):
 
     def get_num_hidden(self):
         return self.config.model_size
+
+    def get_num_layers(self):
+        return self.config.num_layers * self.config.repeat_layers
