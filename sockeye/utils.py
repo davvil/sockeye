@@ -262,7 +262,7 @@ def combine_means(means: List[Optional[float]], num_sents: List[int]) -> float:
 
 def combine_stds(stds: List[Optional[float]], means: List[Optional[float]], num_sents: List[int]) -> float:
     """
-    Takes a list of standard deviations, means and number of sentences of the same length and computes 
+    Takes a list of standard deviations, means and number of sentences of the same length and computes
     the combined standard deviation.
 
     :param stds: A list of standard deviations.
@@ -820,3 +820,28 @@ def create_pool(max_processes):
         return SingleProcessPool()
     else:
         return multiprocessing.pool.Pool(processes=max_processes)
+
+
+def garbage_collect(ctx: Union[mx.Context, List[mx.Context]] = None):
+    '''
+    Synchronously empty the memory pools for one or more contexts. Call this
+    function after infrequent operations that temporarily use substantial
+    memory (example: loading params from disk).
+
+    :param ctx: Context or list of contexts on which to run garbage collection.
+                Defaults to `cpu()` and always includes `cpu()`.
+    '''
+    # Gather contexts
+    if isinstance(ctx, list):
+        contexts = set(ctx)
+    elif isinstance(ctx, mx.Context):
+        contexts = {ctx}
+    else:
+        contexts = {mx.cpu()}
+    # Always include CPU context
+    contexts.add(mx.cpu())
+    # Empty memory pools
+    for context in contexts:
+        context.empty_cache()
+    # Wait for all operations to complete
+    mx.nd.waitall()

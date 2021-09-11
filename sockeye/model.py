@@ -649,6 +649,10 @@ def load_model(model_folder: str,
                           "Number of loaded target vocabularies (%d) does not match "
                           "number of target factors for model '%s' (%d)" % (len(target_vocabs), model_folder,
                                                                             model.num_target_factors))
+
+    # Synchronous memory cleanup after load/cast/hybridize
+    utils.garbage_collect(ctx=context)
+
     return model, source_vocabs, target_vocabs
 
 
